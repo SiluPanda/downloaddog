@@ -87,11 +87,7 @@ async function downloadYoutube(url: string, response: Response, next: NextFuncti
 
 async function downloadInstagram(url: string, response: Response, next: NextFunction): Promise<void> {
     try {
-        https.get(url, async (res) => {
-            if (res.statusCode === 200) {
-                
-            }
-        }
+        console.log("not implemented")
     } catch (err) {
         next(err)
     }
