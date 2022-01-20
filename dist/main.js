@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const ytdl_core_1 = __importDefault(require("ytdl-core"));
 const path_1 = __importDefault(require("path"));
+const instagram_1 = require("./instagram");
 const app = (0, express_1.default)();
 app.use('/static', express_1.default.static(path_1.default.resolve(__dirname + '/../static')));
 app.get('/', (request, response, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -59,7 +60,7 @@ app.get('/download', (request, response, next) => __awaiter(void 0, void 0, void
         url = url.toString();
         let websiteType = yield findWebsiteType(url);
         if (websiteType === 'instagram') {
-            return downloadInstagram(url, response, next);
+            return (0, instagram_1.downloadInstagram)(url, response, next);
         }
         else if (websiteType == 'youtube') {
             return downloadYoutube(url, response, next);
@@ -81,15 +82,6 @@ function downloadYoutube(url, response, next) {
                 });
             });
             res.pipe(response);
-        }
-        catch (err) {
-            next(err);
-        }
-    });
-}
-function downloadInstagram(url, response, next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
         }
         catch (err) {
             next(err);

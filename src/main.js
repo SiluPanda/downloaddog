@@ -1,13 +1,13 @@
-import express, {Request, Response, NextFunction} from 'express'
-import ytdl from 'ytdl-core'
-import path from 'path'
-import https from 'https'
-import { downloadInstagram } from './instagram'
+const express = require('express')
+const ytdl = require('ytdl-core')
+const path = require('path')
+const idownloader =  require('@juliendu11/instagram-downloader')
+const { downloadInstagram } = require('./instagram')
 
 const app = express()
 app.use('/static', express.static(path.resolve(__dirname + '/../static')));
 
-app.get('/', async (request: Request, response: Response, next: NextFunction) => {
+app.get('/', async (request, response, next) => {
     try {
         response.sendFile(path.resolve(__dirname + '/../static/index.html'))
     } catch (err) {
@@ -15,7 +15,7 @@ app.get('/', async (request: Request, response: Response, next: NextFunction) =>
     }
 })
 
-app.get('/validate', async (request: Request, response: Response, next: NextFunction) => {
+app.get('/validate', async (request, response, next) => {
     try {
         let { url } = request.query
         if (!url) {
@@ -41,7 +41,7 @@ app.get('/validate', async (request: Request, response: Response, next: NextFunc
     }
 })
 
-app.get('/download', async (request: Request, response: Response, next: NextFunction) => {
+app.get('/download', async (request, response, next) => {
     try {
         let { url } = request.query
         if (!url) {
@@ -51,8 +51,16 @@ app.get('/download', async (request: Request, response: Response, next: NextFunc
         }
 
         url = url.toString()
-        
+        if (!url.startsWith('http')) {
+            url = 'https://' + url
+        }
+
         let websiteType = await findWebsiteType(url)
+        if (websiteType === 'invalid') {
+            return response.status(400).json({
+                message: `provided URL ${url} is not currently supported`
+            })
+        }
 
         response.header('Content-Disposition', 'attachment;filename=video.mp4')
         if (websiteType === 'instagram') {
@@ -66,14 +74,12 @@ app.get('/download', async (request: Request, response: Response, next: NextFunc
         
 
     } catch (err) {
-        console.log("coming here")
         next(err)
     }
 })
 
-async function downloadYoutube(url: string, response: Response, next: NextFunction): Promise<void> {
+async function downloadYoutube(url, response, next) {
     try {
-
         let res = ytdl(url)
         res.on('error', () => {
             return response.status(404).json({
@@ -87,9 +93,7 @@ async function downloadYoutube(url: string, response: Response, next: NextFuncti
     }
 }
 
-type WebsiteType = 'instagram' | 'youtube' | 'twitch' | 'invalid'
-
-async function findWebsiteType(url: string): Promise<WebsiteType> {
+async function findWebsiteType(url) {
     let urlObj = new URL(url)
     let origin = urlObj.origin
 
@@ -100,7 +104,7 @@ async function findWebsiteType(url: string): Promise<WebsiteType> {
 }
 
 
-app.use(function uncaughtExceptionHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+app.use(function uncaughtExceptionHandler(err, req, res, next) {
     console.log(`[Error] ${err.stack}`)
     return res.status(500).json({
         message: `something went wrong, reason: ${err.message}`
